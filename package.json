@@ -1,0 +1,28 @@
+{
+  "name": "wechat",
+  "version": "1.0.0",
+  "description": "使用 Node.js开发微信",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.15.3",
+    "xml2js": "^0.4.17"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.30.0",
+    "@typescript-eslint/parser": "^2.30.0",
+    "eslint": "^6.8.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/warrior-battle"
+  },
+  "author": "X-CF",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/warrior-battle"
+  },
+  "homepage": "https://github.com/warrior-battle"
+}
