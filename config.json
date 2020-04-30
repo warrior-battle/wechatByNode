@@ -4,8 +4,12 @@
     "appScrect":"bc401e06c267984c1672ab3339eb37d8",
     "encodingAESKey":"gFUjxAhJoRYSkJQ21VHrZBTOu7jpRfAaqpqU3c2vMKA",
     "apiDomain":"https://api.weixin.qq.com/",
+    "weather":"https://www.sojson.com/open/api/weather/json.shtml?city=%s",
     "apiURL":{
         "accessTokenApi":"%scgi-bin/token?grant_type=client_credential&appid=%s&secret=%s",
-        "createMenu":"%scgi-bin/menu/create?access_token=%s"
+        "createMenu":"%scgi-bin/menu/create?access_token=%s",
+		"uploadFile": "%scgi-bin/media/upload?access_token=%s&type=%s",
+        "message": "%scgi-bin/message/mass/sendall?access_token=%s",
+        "username":"%scgi-bin/user/info?access_token=%s&openid=%s&lang=zh_CN"
     }
 }

@@ -5,6 +5,7 @@
   "main": "app.js",
   "dependencies": {
     "express": "^4.15.3",
+    "request": "^2.88.2",
     "xml2js": "^0.4.17"
   },
   "devDependencies": {

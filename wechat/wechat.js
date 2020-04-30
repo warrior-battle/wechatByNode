@@ -9,7 +9,9 @@ const crypto = require("crypto"), //引入加密模块
   menus = require("./menus"), //引入微信菜单配置
   parseString = require("xml2js").parseString, //引入xml2js包
   msg = require("./msg"), //引入消息处理模块
-  CryptoGraphy = require("./cryptoGraphy"); //微信消息加解密模块
+  CryptoGraphy = require("./cryptoGraphy"), //微信消息加解密模块
+  path = require("path"), //路径模块包
+  request = require("request");
 
 /**
  * 构建 WeChat 对象 即 js中 函数就是对象
@@ -26,6 +28,8 @@ var WeChat = function (config) {
   this.appScrect = config.appScrect;
   //设置 WeChat 对象属性 apiDomain
   this.apiDomain = config.apiDomain;
+  //获得weather对象属性
+  this.weather = config.weather;
   //设置 WeChat 对象属性 apiURL
   this.apiURL = config.apiURL;
 
@@ -220,7 +224,7 @@ WeChat.prototype.handleMsg = function (req, res) {
         }
         var toUser = result.ToUserName; //接收方微信
         var fromUser = result.FromUserName; //发送仿微信
-        var reportMsg = ""; //声明回复消息的变量
+        let reportMsg = ""; //声明回复消息的变量
 
         //判断消息类型
         if (result.MsgType.toLowerCase() === "event") {
@@ -232,8 +236,11 @@ WeChat.prototype.handleMsg = function (req, res) {
                 "欢迎关注 福嗅 公众号，来聊聊吧。还可回复以下数字：\n";
               content += "1.你是谁\n";
               content += "2.关于Node.js\n";
+              content += "3.输入“美女”可以得到美女图！！";
+              content += "回复“天气”可以获得当地天气情况！！";
               content += "回复 “文章”  可以得到图文推送哦~\n";
               reportMsg = msg.txtMsg(fromUser, toUser, content);
+              that.msgSend(res,req,reportMsg);
               break;
             case "click":
               var contentArr = [
@@ -261,6 +268,7 @@ WeChat.prototype.handleMsg = function (req, res) {
               ];
               //回复图文消息
               reportMsg = msg.graphicMsg(fromUser, toUser, contentArr);
+              that.msgSend(res,req,reportMsg);
               break;
           }
         } else {
@@ -274,6 +282,7 @@ WeChat.prototype.handleMsg = function (req, res) {
                   toUser,
                   "Hello ！我的英文名字叫福嗅"
                 );
+                that.msgSend(res,req,reportMsg);
                 break;
               case "2":
                 reportMsg = msg.txtMsg(
@@ -281,6 +290,7 @@ WeChat.prototype.handleMsg = function (req, res) {
                   toUser,
                   "Node.js是一个开放源代码、跨平台的JavaScript语言运行环境，采用Google开发的V8运行代码,使用事件驱动、非阻塞和异步输入输出模型等技术来提高性能，可优化应用程序的传输量和规模。这些技术通常用于数据密集的事实应用程序"
                 );
+                that.msgSend(res,req,reportMsg);
                 break;
               case "文章":
                 var contentArr = [
@@ -295,20 +305,49 @@ WeChat.prototype.handleMsg = function (req, res) {
                 ];
                 //回复图文消息
                 reportMsg = msg.graphicMsg(fromUser, toUser, contentArr);
+                that.msgSend(res,req,reportMsg);
+                break;
+              case "美女":
+                var urlPath = path.join(__dirname, "../public/img/timg.jpg");
+                that.uploadFile(urlPath, "image").then(function (mdeia_id) {
+                  reportMsg = msg.imgMsg(fromUser, toUser, mdeia_id);
+                  that.msgSend(res,req,reportMsg);
+                });
+
+                break;
+              case "天气":
+                that.getUserInfomation(fromUser).then(function (city) {
+                  if (city) {
+                    // 获取的城市名为中文，不能直接访问，得通过encode编码一下
+                    var url = encodeURI(util.format(that.weather, city));
+                    request(url, function (err, response, body) {
+                      var obj = JSON.parse(body).data.forecast;
+                      // 拼接字符串
+                      var str =
+                        JSON.parse(body).city +
+                        "今天的天气情况为:   " +
+                        obj[0].high +
+                        obj[0].low +
+                        "天气情况:" +
+                        obj[0].type +
+                        "温馨提示:" +
+                        obj[0].notice;
+                      reportMsg = msg.txtMsg(fromUser, toUser, str);
+                      console.log("得到天气信息");
+                    });
+                  } else {
+                    reportMsg = msg.txtMsg(fromUser, toUser, "获取天气失败");
+                  }
+                  that.msgSend(res,req,reportMsg);
+                });
                 break;
               default:
                 reportMsg = msg.txtMsg(fromUser, toUser, "没有这个选项哦");
+                that.msgSend(res,req,reportMsg);
                 break;
             }
           }
         }
-        //判断消息加解密方式，如果未加密则使用明文，对明文消息进行加密
-        reportMsg =
-          req.query.encrypt_type == "aes"
-            ? cryptoGraphy.encryptMsg(reportMsg)
-            : reportMsg;
-        //返回给微信服务器
-        res.send(reportMsg);
       } else {
         //打印错误
         console.log(err);
@@ -317,15 +356,51 @@ WeChat.prototype.handleMsg = function (req, res) {
   });
 };
 
-WeChat.prototype.createMenu = function (req, res) {
+//由于promise方式嵌套，外部在里面的变量都会被杀掉，封装发送消息函数
+WeChat.prototype.msgSend=function(res,req,reportMsg){
+  //判断消息加解密方式，如果未加密则使用明文，对明文消息进行加密
+  reportMsg =req.query.encrypt_type == "aes" ? cryptoGraphy.encryptMsg(reportMsg) : reportMsg;
+//返回给微信服务器
+    res.send(reportMsg);
+}
+// 素材上传
+WeChat.prototype.uploadFile = function (urlPath, type) {
   var that = this;
-  var url = util.format(
-    that.apiDomain,
-    that.apiURL.createMenu,
-    accessTokenJson.access_token
-  );
-  this.requestPost(url).then(function (data) {
-    console.log(JSON.parse(data));
+  return new Promise(function (resolve, reject) {
+    that.getAccessToken().then(function (data) {
+      var form = {
+        //构造表单
+        media: fs.createReadStream(urlPath),
+      };
+      var url = util.format(that.apiURL.uploadFile, that.apiDomain, data, type);
+      that.testPost(url, form).then(function (result) {
+        resolve(JSON.parse(result).media_id);
+      });
+    });
+  });
+};
+// 封装一个post请求方法
+WeChat.prototype.testPost = function (url, data) {
+  return new Promise(function (resolve, reject) {
+    request.post({ url: url, formData: data }, function (
+      err,
+      httpResponse,
+      body
+    ) {
+      resolve(body);
+    });
+  });
+};
+// 获取用户信息
+WeChat.prototype.getUserInfomation = function (openid) {
+  var that = this;
+  return new Promise(function (resolve, reject) {
+    that.getAccessToken().then(function (data) {
+      var url = util.format(that.apiURL.username, that.apiDomain, data, openid);
+      that.requestGet(url).then(function (result) {
+        resolve(JSON.parse(result).city);
+      });
+    });
   });
 };
 

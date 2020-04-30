@@ -40,3 +40,25 @@ exports.graphicMsg = function(toUser,fromUser,contentArr){
     return xmlContent;
 }
 
+// 回复图片
+exports.imgMsg = function(toUser, fromUser, media_id) {
+    var xmlContent = "<xml><ToUserName><![CDATA["+ toUser +"]]></ToUserName>";
+        xmlContent += "<FromUserName><![CDATA["+ fromUser +"]]></FromUserName>";
+        xmlContent += "<CreateTime>"+ new Date().getTime() +"</CreateTime>";
+        xmlContent += "<MsgType><![CDATA[image]]></MsgType>";
+        xmlContent += "<Image><MediaId><![CDATA["+ media_id +"]]></MediaId></Image></xml>";
+    return xmlContent; 
+}
+
+// 回复语音
+exports.vodeoMsg = function(toUser, fromUser, media_id, title, description) {
+    var xmlContent = "<xml><ToUserName><![CDATA["+ toUser +"]]></ToUserName>";
+        xmlContent += "<FromUserName><![CDATA["+ fromUser +"]]></FromUserName>";
+        xmlContent += "<CreateTime>"+ new Date().getTime() +"</CreateTime>";
+        xmlContent += "<MsgType><![CDATA[video]]></MsgType>";
+        xmlContent += "<Video><MediaId><![CDATA["+ media_id +"]]></MediaId>";
+        xmlContent += "<Title><![CDATA["+ title +"]]></Title>";
+        xmlContent += "<Description><![CDATA["+ description +"]]></Description></Video></xml>";
+    return xmlContent;  
+}
+
