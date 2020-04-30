@@ -1,5 +1,5 @@
-# wechatByNode
-一个基于node的微信公众号开发项
+# 一个基于node的微信公众号开发项
+
 
 ![node version](https://img.shields.io/badge/node-7.5.0-brightgreen.svg)
 ![npm version](https://img.shields.io/badge/npm-4.1.2-brightgreen.svg)
