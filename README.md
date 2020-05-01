@@ -30,7 +30,7 @@
 # 构建项目
  1. 将项目 clone 到本地
     ```
-    git clone git@github.com:SilenceHVK/wechatByNode.git
+    git clone https://github.com/warrior-battle/wechatByNode.git
     ```
 
  2. 打开项目配置文件 config.json
