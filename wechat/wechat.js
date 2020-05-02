@@ -11,8 +11,9 @@ const crypto = require("crypto"), //引入加密模块
   msg = require("./msg"), //引入消息处理模块
   CryptoGraphy = require("./cryptoGraphy"), //微信消息加解密模块
   path = require("path"), //路径模块包
-  request = require("request");
-
+  request = require("request"),
+  subscribe = require("./data_config/subscribe"), //事件相关消息
+  text = require("./data_config/text"); //文本相关消息
 /**
  * 构建 WeChat 对象 即 js中 函数就是对象
  * @param {JSON} config 微信配置文件
@@ -65,7 +66,7 @@ var WeChat = function (config) {
    * @param {String} url  请求地址
    * @param {JSON} data 提交的数据
    */
-  this.requestPost = function (url, data) {
+  this.requestPost = function (url,data) {
     return new Promise(function (resolve, reject) {
       //解析 url 地址
       var urlData = urltil.parse(url);
@@ -83,6 +84,7 @@ var WeChat = function (config) {
           "Content-Length": Buffer.byteLength(data, "utf-8"),
         },
       };
+
       var req = https
         .request(options, function (res) {
           var buffer = [],
@@ -231,44 +233,18 @@ WeChat.prototype.handleMsg = function (req, res) {
           //判断事件类型
           switch (result.Event.toLowerCase()) {
             case "subscribe":
-              //回复消息
-              var content =
-                "欢迎关注 福嗅 公众号，来聊聊吧。还可回复以下数字：\n";
-              content += "1.你是谁\n";
-              content += "2.关于Node.js\n";
-              content += "3.输入“美女”可以得到美女图！！";
-              content += "回复“天气”可以获得当地天气情况！！";
-              content += "回复 “文章”  可以得到图文推送哦~\n";
+              var content = subscribe.content;
               reportMsg = msg.txtMsg(fromUser, toUser, content);
-              that.msgSend(res,req,reportMsg);
+              that.msgSend(res, req, reportMsg);
               break;
             case "click":
-              var contentArr = [
-                {
-                  Title: "Node.js 微信自定义菜单",
-                  Description: "使用Node.js实现自定义微信菜单",
-                  PicUrl:
-                    "http://img.blog.csdn.net/20170605162832842?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvaHZrQ29kZXI=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast",
-                  Url: "http://blog.csdn.net/hvkcoder/article/details/72868520",
-                },
-                {
-                  Title: "Node.js access_token的获取、存储及更新",
-                  Description: "Node.js access_token的获取、存储及更新",
-                  PicUrl:
-                    "http://img.blog.csdn.net/20170528151333883?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvaHZrQ29kZXI=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast",
-                  Url: "http://blog.csdn.net/hvkcoder/article/details/72783631",
-                },
-                {
-                  Title: "Node.js 接入微信公众平台开发",
-                  Description: "Node.js 接入微信公众平台开发",
-                  PicUrl:
-                    "http://img.blog.csdn.net/20170605162832842?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvaHZrQ29kZXI=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast",
-                  Url: "http://blog.csdn.net/hvkcoder/article/details/72765279",
-                },
-              ];
               //回复图文消息
-              reportMsg = msg.graphicMsg(fromUser, toUser, contentArr);
-              that.msgSend(res,req,reportMsg);
+              reportMsg = msg.graphicMsg(
+                fromUser,
+                toUser,
+                subscribe.contentArr
+              );
+              that.msgSend(res, req, reportMsg);
               break;
           }
         } else {
@@ -277,44 +253,26 @@ WeChat.prototype.handleMsg = function (req, res) {
             //根据消息内容返回消息信息
             switch (result.Content) {
               case "1":
-                reportMsg = msg.txtMsg(
-                  fromUser,
-                  toUser,
-                  "Hello ！我的英文名字叫福嗅"
-                );
-                that.msgSend(res,req,reportMsg);
+                reportMsg = msg.txtMsg(fromUser, toUser, text.text.one);
+                that.msgSend(res, req, reportMsg);
                 break;
               case "2":
-                reportMsg = msg.txtMsg(
-                  fromUser,
-                  toUser,
-                  "Node.js是一个开放源代码、跨平台的JavaScript语言运行环境，采用Google开发的V8运行代码,使用事件驱动、非阻塞和异步输入输出模型等技术来提高性能，可优化应用程序的传输量和规模。这些技术通常用于数据密集的事实应用程序"
-                );
-                that.msgSend(res,req,reportMsg);
+                reportMsg = msg.txtMsg(fromUser, toUser, text.text.two);
+                that.msgSend(res, req, reportMsg);
                 break;
               case "文章":
-                var contentArr = [
-                  {
-                    Title: "Node.js 微信自定义菜单",
-                    Description: "使用Node.js实现自定义微信菜单",
-                    PicUrl:
-                      "http://img.blog.csdn.net/20170605162832842?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvaHZrQ29kZXI=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast",
-                    Url:
-                      "http://blog.csdn.net/hvkcoder/article/details/72868520",
-                  },
-                ];
                 //回复图文消息
-                reportMsg = msg.graphicMsg(fromUser, toUser, contentArr);
-                that.msgSend(res,req,reportMsg);
+                reportMsg = msg.graphicMsg(fromUser, toUser, text.text.article);
+                that.msgSend(res, req, reportMsg);
                 break;
               case "美女":
-                var urlPath = path.join(__dirname, "../public/img/timg.jpg");
+                var urlPath = path.join(__dirname, text.text.woman);
                 that.uploadFile(urlPath, "image").then(function (mdeia_id) {
                   reportMsg = msg.imgMsg(fromUser, toUser, mdeia_id);
-                  that.msgSend(res,req,reportMsg);
+                  that.msgSend(res, req, reportMsg);
                 });
-
                 break;
+
               case "天气":
                 that.getUserInfomation(fromUser).then(function (city) {
                   if (city) {
@@ -323,27 +281,31 @@ WeChat.prototype.handleMsg = function (req, res) {
                     request(url, function (err, response, body) {
                       var obj = JSON.parse(body).data.forecast;
                       // 拼接字符串
-                      var str =
-                        JSON.parse(body).city +
-                        "今天的天气情况为:   " +
-                        obj[0].high +
-                        obj[0].low +
-                        "天气情况:" +
-                        obj[0].type +
-                        "温馨提示:" +
-                        obj[0].notice;
+                      var str = util.format(
+                        text.text.weather.succeed,
+                        JSON.parse(body).city,
+                        obj[0].high,
+                        obj[0].low,
+                        obj[0].type,
+                        obj[0].notice
+                      );
+                      console.log(str);
                       reportMsg = msg.txtMsg(fromUser, toUser, str);
                       console.log("得到天气信息");
                     });
                   } else {
-                    reportMsg = msg.txtMsg(fromUser, toUser, "获取天气失败");
+                    reportMsg = msg.txtMsg(
+                      fromUser,
+                      toUser,
+                      text.text.weather.err
+                    );
                   }
-                  that.msgSend(res,req,reportMsg);
+                  that.msgSend(res, req, reportMsg);
                 });
                 break;
               default:
-                reportMsg = msg.txtMsg(fromUser, toUser, "没有这个选项哦");
-                that.msgSend(res,req,reportMsg);
+                reportMsg = msg.txtMsg(fromUser, toUser, text.text.default);
+                that.msgSend(res, req, reportMsg);
                 break;
             }
           }
@@ -357,12 +319,15 @@ WeChat.prototype.handleMsg = function (req, res) {
 };
 
 //由于promise方式嵌套，外部在里面的变量都会被杀掉，封装发送消息函数
-WeChat.prototype.msgSend=function(res,req,reportMsg){
+WeChat.prototype.msgSend = function (res, req, reportMsg) {
   //判断消息加解密方式，如果未加密则使用明文，对明文消息进行加密
-  reportMsg =req.query.encrypt_type == "aes" ? cryptoGraphy.encryptMsg(reportMsg) : reportMsg;
-//返回给微信服务器
-    res.send(reportMsg);
-}
+  reportMsg =
+    req.query.encrypt_type == "aes"
+      ? cryptoGraphy.encryptMsg(reportMsg)
+      : reportMsg;
+  //返回给微信服务器
+  res.send(reportMsg);
+};
 // 素材上传
 WeChat.prototype.uploadFile = function (urlPath, type) {
   var that = this;
@@ -373,14 +338,14 @@ WeChat.prototype.uploadFile = function (urlPath, type) {
         media: fs.createReadStream(urlPath),
       };
       var url = util.format(that.apiURL.uploadFile, that.apiDomain, data, type);
-      that.testPost(url, form).then(function (result) {
+      that.requestMeDia(url, form).then(function (result) {
         resolve(JSON.parse(result).media_id);
       });
     });
   });
 };
-// 封装一个post请求方法
-WeChat.prototype.testPost = function (url, data) {
+// 封装一个post请求方法---专门用于得到临时素材
+WeChat.prototype.requestMeDia = function (url, data) {
   return new Promise(function (resolve, reject) {
     request.post({ url: url, formData: data }, function (
       err,

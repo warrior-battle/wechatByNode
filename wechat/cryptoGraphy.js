@@ -17,7 +17,7 @@ var CryptoGraphy = function(config,req){
     //设置 CryptoGraphy 对象属性 appID
     this.appID = config.appID;
     //设置 CryptoGraphy 对象属性 encodingAESKey
-    this.encodingAESKey = new Buffer(config.encodingAESKey + '=','base64');
+    this.encodingAESKey =Buffer.from(config.encodingAESKey + '=','base64');
     //设置 CryptoGraphy 对象属性 iv
     this.iv = this.encodingAESKey.slice(0,16);
     //设置 CryptoGraphy 对象属性 msgSignature
@@ -85,8 +85,8 @@ CryptoGraphy.prototype.decryptMsg = function (encryptMsg){
 CryptoGraphy.prototype.encryptMsg = function(xmlMsg){
     //声明 16位的随机字符串
     var random =crypto.randomBytes(8).toString('hex');
-    var text = new Buffer(xmlMsg);
-    var buf = new Buffer(4);
+    var text = Buffer.from(xmlMsg);
+    var buf = Buffer.from(4);
     buf.writeUInt32BE(text.length);
     //进行PKCS7补位
     var pack = KCS7Encoder(20 + text.length + this.appID.length);
