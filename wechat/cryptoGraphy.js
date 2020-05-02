@@ -86,7 +86,7 @@ CryptoGraphy.prototype.encryptMsg = function(xmlMsg){
     //声明 16位的随机字符串
     var random =crypto.randomBytes(8).toString('hex');
     var text = Buffer.from(xmlMsg);
-    var buf = Buffer.from(4);
+    var buf = Buffer.alloc(4);
     buf.writeUInt32BE(text.length);
     //进行PKCS7补位
     var pack = KCS7Encoder(20 + text.length + this.appID.length);

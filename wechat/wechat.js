@@ -13,7 +13,8 @@ const crypto = require("crypto"), //引入加密模块
   path = require("path"), //路径模块包
   request = require("request"),
   subscribe = require("./data_config/subscribe"), //事件相关消息
-  text = require("./data_config/text"); //文本相关消息
+  text = require("./data_config/text"), //文本相关消息
+  aiTencent = require("../AI_Tencent/index");
 /**
  * 构建 WeChat 对象 即 js中 函数就是对象
  * @param {JSON} config 微信配置文件
@@ -66,7 +67,7 @@ var WeChat = function (config) {
    * @param {String} url  请求地址
    * @param {JSON} data 提交的数据
    */
-  this.requestPost = function (url,data) {
+  this.requestPost = function (url, data) {
     return new Promise(function (resolve, reject) {
       //解析 url 地址
       var urlData = urltil.parse(url);
@@ -122,10 +123,12 @@ WeChat.prototype.auth = function (req, res) {
     //格式化请求连接
     var url = util.format(that.apiURL.createMenu, that.apiDomain, data);
     //使用 Post 请求创建微信菜单
-    that.requestPost(url, JSON.stringify(menus)).then(function (data) {
-      //将结果打印
-      console.log(data);
-    });
+    that
+      .requestPost(url, JSON.stringify(that.getCurrentMenu()))
+      .then(function (data) {
+        //将结果打印
+        console.log(data);
+      });
   });
 
   //1.获取微信服务器Get请求的参数 signature、timestamp、nonce、echostr
@@ -235,7 +238,7 @@ WeChat.prototype.handleMsg = function (req, res) {
             case "subscribe":
               var content = subscribe.content;
               reportMsg = msg.txtMsg(fromUser, toUser, content);
-              that.msgSend(res, req, reportMsg);
+              that.msgSend(res, req, reportMsg, cryptoGraphy);
               break;
             case "click":
               //回复图文消息
@@ -244,7 +247,7 @@ WeChat.prototype.handleMsg = function (req, res) {
                 toUser,
                 subscribe.contentArr
               );
-              that.msgSend(res, req, reportMsg);
+              that.msgSend(res, req, reportMsg, cryptoGraphy);
               break;
           }
         } else {
@@ -254,22 +257,22 @@ WeChat.prototype.handleMsg = function (req, res) {
             switch (result.Content) {
               case "1":
                 reportMsg = msg.txtMsg(fromUser, toUser, text.text.one);
-                that.msgSend(res, req, reportMsg);
+                that.msgSend(res, req, reportMsg, cryptoGraphy);
                 break;
               case "2":
                 reportMsg = msg.txtMsg(fromUser, toUser, text.text.two);
-                that.msgSend(res, req, reportMsg);
+                that.msgSend(res, req, reportMsg, cryptoGraphy);
                 break;
               case "文章":
                 //回复图文消息
                 reportMsg = msg.graphicMsg(fromUser, toUser, text.text.article);
-                that.msgSend(res, req, reportMsg);
+                that.msgSend(res, req, reportMsg, cryptoGraphy);
                 break;
-              case "美女":
+              case "女神":
                 var urlPath = path.join(__dirname, text.text.woman);
                 that.uploadFile(urlPath, "image").then(function (mdeia_id) {
                   reportMsg = msg.imgMsg(fromUser, toUser, mdeia_id);
-                  that.msgSend(res, req, reportMsg);
+                  that.msgSend(res, req, reportMsg, cryptoGraphy);
                 });
                 break;
 
@@ -300,12 +303,16 @@ WeChat.prototype.handleMsg = function (req, res) {
                       text.text.weather.err
                     );
                   }
-                  that.msgSend(res, req, reportMsg);
+                  that.msgSend(res, req, reportMsg, cryptoGraphy);
                 });
                 break;
               default:
-                reportMsg = msg.txtMsg(fromUser, toUser, text.text.default);
-                that.msgSend(res, req, reportMsg);
+                aiTencent.translate(result.Content).then(function (data) {
+                  reportMsg = msg.txtMsg(fromUser, toUser, data.data.answer);
+                  console.log(data.data.answer);
+                  that.msgSend(res, req, reportMsg, cryptoGraphy);
+                });
+
                 break;
             }
           }
@@ -319,7 +326,7 @@ WeChat.prototype.handleMsg = function (req, res) {
 };
 
 //由于promise方式嵌套，外部在里面的变量都会被杀掉，封装发送消息函数
-WeChat.prototype.msgSend = function (res, req, reportMsg) {
+WeChat.prototype.msgSend = function (res, req, reportMsg, cryptoGraphy) {
   //判断消息加解密方式，如果未加密则使用明文，对明文消息进行加密
   reportMsg =
     req.query.encrypt_type == "aes"
@@ -364,6 +371,22 @@ WeChat.prototype.getUserInfomation = function (openid) {
       var url = util.format(that.apiURL.username, that.apiDomain, data, openid);
       that.requestGet(url).then(function (result) {
         resolve(JSON.parse(result).city);
+      });
+    });
+  });
+};
+
+WeChat.prototype.getCurrentMenu = function () {
+  var that = this;
+  return new Promise(function (resolve, reject) {
+    that.getAccessToken().then(function (data) {
+      var url = util.format(
+        that.apiURL.getCurrentSelfmenu,
+        that.apiDomain,
+        data
+      );
+      request.get(url, function (err, httpResponse, body) {
+        resolve(body);
       });
     });
   });
