@@ -1,8 +1,8 @@
 {
-    "token":"wechat",
-    "appID":"wxea4f0be0672bac02",
-    "appScrect":"bc401e06c267984c1672ab3339eb37d8",
-    "encodingAESKey":"p6ey6cfJBNRA0frSRh05bl6H4ILTnF5mDDqIotagrfk",
+    "token":"",
+    "appID":"",
+    "appScrect":"",
+    "encodingAESKey":"",
     "apiDomain":"https://api.weixin.qq.com/",
     "weather":"https://www.sojson.com/open/api/weather/json.shtml?city=%s",
     "apiURL":{
