@@ -14,6 +14,7 @@ const crypto = require("crypto"), //引入加密模块
   request = require("request"),
   subscribe = require("./data_config/subscribe"), //事件相关消息
   text = require("./data_config/text"), //文本相关消息
+  user = require("./get/userAccount"),
   aiTencent = require("../AI_Tencent/index");
 /**
  * 构建 WeChat 对象 即 js中 函数就是对象
@@ -118,18 +119,7 @@ var WeChat = function (config) {
  * @param {Response} res Response 对象
  */
 WeChat.prototype.auth = function (req, res) {
-  var that = this;
-  this.getAccessToken().then(function (data) {
-    //格式化请求连接
-    var url = util.format(that.apiURL.createMenu, that.apiDomain, data);
-    //使用 Post 请求创建微信菜单
-    that
-      .requestPost(url, JSON.stringify(that.getCurrentMenu()))
-      .then(function (data) {
-        //将结果打印
-        console.log(data);
-      });
-  });
+  this.CreateMenu();
 
   //1.获取微信服务器Get请求的参数 signature、timestamp、nonce、echostr
   var signature = req.query.signature, //微信加密签名
@@ -185,7 +175,7 @@ WeChat.prototype.getAccessToken = function () {
           fs.writeFile(
             "./wechat/access_token.json",
             JSON.stringify(accessTokenJson),
-            function (err, written, buffer) {}
+            function (err, written, buffer) { }
           );
           //将获取后的 access_token 返回
           resolve(accessTokenJson.access_token);
@@ -230,7 +220,6 @@ WeChat.prototype.handleMsg = function (req, res) {
         var toUser = result.ToUserName; //接收方微信
         var fromUser = result.FromUserName; //发送仿微信
         let reportMsg = ""; //声明回复消息的变量
-
         //判断消息类型
         if (result.MsgType.toLowerCase() === "event") {
           //判断事件类型
@@ -242,12 +231,17 @@ WeChat.prototype.handleMsg = function (req, res) {
               break;
             case "click":
               //回复图文消息
-              reportMsg = msg.graphicMsg(
-                fromUser,
-                toUser,
-                subscribe.contentArr
-              );
-              that.msgSend(res, req, reportMsg, cryptoGraphy);
+              if (result.EventKey == 'today_recommend') {
+                reportMsg = msg.graphicMsg(
+                  fromUser,
+                  toUser,
+                  subscribe.contentArr);
+                that.msgSend(res, req, reportMsg, cryptoGraphy);
+              } else if (result.EventKey == 'user_token') {
+                var users = new user();
+                users.userAuth();
+              };
+              console.log(result);
               break;
           }
         } else {
@@ -376,6 +370,9 @@ WeChat.prototype.getUserInfomation = function (openid) {
   });
 };
 
+/**
+ * 自定义菜单查询接口
+ */
 WeChat.prototype.getCurrentMenu = function () {
   var that = this;
   return new Promise(function (resolve, reject) {
@@ -388,6 +385,25 @@ WeChat.prototype.getCurrentMenu = function () {
       request.get(url, function (err, httpResponse, body) {
         resolve(body);
       });
+    });
+  });
+};
+/**
+ * 自定义菜单创建接口
+ */
+WeChat.prototype.CreateMenu = function () {
+  var that = this;
+  return new Promise(function (resolve, reject) {
+    that.getAccessToken().then(function (data) {
+      //格式化请求连接
+      var url = util.format(that.apiURL.createMenu, that.apiDomain, data);
+      //使用 Post 请求创建微信菜单
+      that
+        .requestPost(url, JSON.stringify(menus))
+        .then(function (data) {
+          //将结果打印
+          console.log(data);
+        });
     });
   });
 };
