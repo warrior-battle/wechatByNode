@@ -1,9 +1,9 @@
 {
   "button": [
     {
-      "type": "click",
+      "type": "view",
       "name": "用户授权",
-      "key": "user_token"
+      "url": "http://8cdt3c.natappfree.cc/userInfo"
     },
     {
       "name": "更多",

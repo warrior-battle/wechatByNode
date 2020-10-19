@@ -21,13 +21,18 @@ app.get('/getAccessToken',function(req,res){
         res.send(data);
     });    
 });
-
+//获取当前菜单样子
 app.get('/cgi-bin/get_current_selfmenu_info',function(req,res){
     wechatApp.getCurrentMenu().then(function(data){
         res.send(data);
     });
 
 })
+//获取用户信息
+app.get('/userInfo',function(req,res){
+    console.log('userInfo_test');
+    res.send('<p>some html</p>')
+});
 
 //监听3000端口
 app.listen(8888);
